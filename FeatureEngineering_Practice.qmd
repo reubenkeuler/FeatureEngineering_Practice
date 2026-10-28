@@ -1,0 +1,148 @@
+---
+title: "Feature Engineering - Practice"
+format: pdf
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+#### ---------------------------------------------------------------------------
+
+### attrition dataset: data exploration and necessary cleaning
+
+```{r}
+library(tidyverse)
+library(tidymodels)   
+tidymodels_prefer()   
+
+attrition <- read_csv("attrition.csv")   # load dataset
+
+```
+
+```{r}
+# check types of features
+# you will notice a lot <chr> character features, we will need to convert them into <fct> for modeling (see below)
+
+glimpse(attrition)
+
+```
+
+
+```{r}
+# convert all character variables to factor variables if required
+
+attrition <- attrition |> mutate(across(where(is.character), as.factor))
+
+glimpse(attrition)   # all <chr> converted to <fct>
+
+```
+
+
+```{r}
+# check for missing entries, which features have missing entries?
+# distribution of features
+
+library(skimr)
+
+skim(attrition)
+
+```
+
+
+```{r}
+# verify the levels of every factor-type feature
+
+attrition |>
+  select(where(is.factor)) |>
+  map(levels)
+
+```
+
+
+```{r}
+# make "Yes" (employee leaves) the first level, i.e., the event of interest
+# this is for modeling and calculating performance metrics later
+
+attrition <- attrition |>
+  mutate(Attrition = fct_relevel(Attrition, "Yes"))
+
+levels(attrition$Attrition)
+
+```
+
+
+```{r}
+# imbalanced dataset in terms of response classes
+
+attrition |>
+  count(Attrition) |>
+  mutate(prop = n / sum(n))
+
+```
+
+
+
+#### ---------------------------------------------------------------------------
+
+### attrition dataset: data splitting
+
+```{r}
+# split original data into training (60%), validation (20%), and test (20%) sets
+# stratify on the response so each set keeps the ~16% attrition rate
+
+set.seed(208)
+
+attrition_split <- initial_validation_split(data = attrition,
+                                            prop = c(0.6, 0.2),
+                                            strata = Attrition)
+
+attrition_train <- training(attrition_split)        # training set
+attrition_validation <- validation(attrition_split) # validation set
+attrition_test <- testing(attrition_split)          # test set
+
+```
+
+
+```{r}
+# verify even distribution of response classes across the three sets
+
+bind_rows(train = attrition_train,
+          validation = attrition_validation,
+          test = attrition_test,
+          .id = "set") |>
+  count(set, Attrition) |>
+  group_by(set) |>
+  mutate(prop = n / sum(n))
+
+```
+
+
+### check for zv/nzv features
+
+```{r}
+# check for zv/nzv features in training set
+
+library(caret)
+
+nearZeroVar(attrition_train, saveMetrics = TRUE)
+
+```
+
+
+
+#### ---------------------------------------------------------------------------
+
+### attrition dataset:: feature engineering Steps
+
+```{r}
+# write our your blueprint / FE steps in plain english for now
+
+
+
+```
+
+
+#### ---------------------------------------------------------------------------
